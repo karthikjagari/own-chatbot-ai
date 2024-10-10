@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiscussWithJK - AI Chat</title>
+    <!-- Link to FontAwesome for Icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Main container for the app */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 900px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* Header branding */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* Icon styling */
+        .header i {
+            margin-right: 10px;
+        }
+
+        .header .hacking-icon {
+            position: absolute;
+            right: 20px;
+        }
+
+        /* Chat messages section */
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background-color: #f0f4f8;
+            scrollbar-width: thin;
+        }
+
+        /* Message bubbles */
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .gpt-message {
+            background-color: #f1f1f1;
+            color: #333;
+            align-self: flex-start;
+            border: 1px solid #ddd;
+        }
+
+        /* Input and send button container */
+        .input-container {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid #ddd;
+            background-color: #fff;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .send-button {
+            padding: 15px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .send-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Spinner for loading */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            animation: spin 1s linear infinite;
+            margin-left: 15px;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Animation for messages */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Media queries for responsiveness */
+        @media (max-width: 600px) {
+            .app-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .chat-input {
+                padding: 10px;
+            }
+
+            .send-button {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Header with branding -->
+        <div class="header">
+            <i class="fas fa-robot"></i>  <!-- ChatGPT icon -->
+            Discuss With JK - AI CHATBOT
+            <i class="fas fa-user-secret hacking-icon"></i> <!-- Hacking icon -->
+        </div>
+
+        <!-- Chat box for displaying messages -->
+        <div id="chat-box" class="chat-box"></div>
+
+        <!-- Input and send button -->
+        <div class="input-container">
+            <input type="text" id="user-input" class="chat-input" placeholder="Type your message...">
+            <button class="send-button" onclick="sendMessage()">Send</button>
+            <div id="loader" class="loader"></div>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const loader = document.getElementById('loader');
+
+        // Append a message to the chat box
+        function appendMessage(sender, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message');
+            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'gpt-message');
+            messageDiv.textContent = message;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Send a message function
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            // Append the user's message to the chat
+            appendMessage('user', message);
+            userInput.value = '';  // Clear input field
+            loader.style.display = 'block';  // Show loader while waiting for a response
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    appendMessage('gpt', `Error: ${data.error}`);
+                } else {
+                    appendMessage('gpt', data.response);
+                }
+            } catch (error) {
+                appendMessage('gpt', 'Something went wrong. Please try again.');
+            } finally {
+                loader.style.display = 'none';  // Hide loader when done
+            }
+        }
+    </script>
+
+</body>
+</html>
