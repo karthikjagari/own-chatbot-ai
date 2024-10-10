@@ -49,7 +49,7 @@ GOOGLE_API_KEY = "YOUR_GEMINI_API_KEY"
 
 Run the application
 python app.py
-Access the app Open your browser and navigate to http://127.0.0.1:5000/.
+Access the app Open your browser and navigate to Running on http://127.0.0.1:5000
 
 Contact
 For any inquiries or issues, feel free to contact:
